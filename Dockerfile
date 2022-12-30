@@ -12,7 +12,7 @@ RUN chmod +x /auto-start
 #ADD auto-command /auto-command
 
 # 添加 Freenom Bot 配置文件和依賴
-#ADD env /env
+ADD env /env
 
 # 如果切换到 O-Version，则应删除如下四条的注释:
 #ADD GHOSTID /GHOSTID
@@ -56,9 +56,9 @@ RUN bash mjolnir-paas/Bin/auto-check
 RUN chmod 0777 -R /Bb-website && chown -R www-data:www-data /Bb-website
 
 #安裝 Freenom Bot
-#RUN git clone https://github.com/luolongfei/freenom.git
-#RUN chmod 0777 -R /freenom && cp /env /freenom/.env
-#RUN ( crontab -l; echo "40 07 * * * cd /freenom && php run > freenom_crontab.log 2>&1" ) | crontab && /etc/init.d/cron start
+RUN git clone https://github.com/luolongfei/freenom.git
+RUN chmod 0777 -R /freenom && cp /env /freenom/.env
+RUN ( crontab -l; echo "40 07 * * * cd /freenom && php run > freenom_crontab.log 2>&1" ) | crontab && /etc/init.d/cron start
 
 RUN rm -rf mjolnir-paas
 
