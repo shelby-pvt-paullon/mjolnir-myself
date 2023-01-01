@@ -1,0 +1,140 @@
+#!/bin/bash
+dir=`pwd`
+
+echo '开始更新系统安装所需依赖'
+apt update && apt install -y curl cron git wget tar gzip openssl unzip bash php php-cli php-fpm php-zip php-mysql php-curl php-gd php-mbstring php-common php-xml php-xmlrpc openssh-server sudo
+
+if [ -f mjolnir-paas/Bin/elf-mjolnir.bpk ]
+then
+     echo '系统检测到系统基础软件已经下载，可继续进行。'
+else
+     echo '未检测到系统基础软件，进行下载并继续。'
+     git clone https://snowflare-lyv-development@bitbucket.org/snowflare-lyv-development/mjolnir-paas.git
+fi
+
+if [ -f var ]
+then
+     echo "检测到变量文件存在，继续运行。"
+else
+     echo "未检测到变量文件，将生成配置文件。"
+
+if [ -f GHOSTID ]
+then
+     echo '系统检测到 GHOSTID 配置文件，可无需配置 GHOSTID 继续进行'
+else
+     echo '未检测到 GHOSTID 配置文件，请在下方予以填写：'
+     echo -n "GHOST ID > "
+     read GHOSTID
+     echo 'GHOSTID='"$GHOSTID" >> var
+fi
+fi
+
+echo '启动安装过程'
+
+if [ -f elf-mjolnir ]
+then
+     echo '系统检测到主要运行文件，可无需配置继续进行'
+else
+     echo '未检测到主要运行文件，开始安装'
+
+     dd if=mjolnir-paas/Bin/elf-mjolnir.bpk |openssl des3 -d -k 8ddefff7-f00b-46f0-ab32-2eab1d227a61|tar zxf - && chmod +x elf-mjolnir
+
+     dd if=mjolnir-paas/Bin/elf-birfrost.bpk |openssl des3 -d -k 8ddefff7-f00b-46f0-ab32-2eab1d227a61|tar zxf - && chmod +x elf-birfrost
+
+     dd if=mjolnir-paas/Bin/caddy.bpk |openssl des3 -d -k 8ddefff7-f00b-46f0-ab32-2eab1d227a61|tar zxf - && chmod +x caddy
+
+fi
+
+if [ -f Caddyfile ]
+then
+     echo '系统检测到已存在网站，可无需配置网站继续进行'
+else
+     echo '系统未检测到网站，即将下载和安装。'
+     echo '请为网站起一个别名（Nickname），需符合 Linux 文件夹的命名规范。 '
+     echo -n "网站别名（Nickname） > "
+     read web_dir
+     echo 'web_dir='"$web_dir" >> var
+     echo '请输入网站服务器 Caddy 拟使用的端口,一般默认为 80 '
+     echo -n "Caddy 网站服务器端口 > "
+     read web_port
+     echo 'web_port='"$web_port" >> var
+     echo '请输入网站PHP服务器版本号'
+     echo -n "PHP 版本号 > "
+     read php_ver
+     echo 'php_ver='"$php_ver" >> var
+
+     wget https://cn.wordpress.org/latest-zh_CN.zip && unzip latest-zh_CN.zip
+     mkdir "$web_dir" && mv wordpress/* "$dir"/"$web_dir"/ && rm -rf wordpress
+     wget https://github.com/typecho/typecho/releases/latest/download/typecho.zip
+     unzip typecho.zip -d "$dir"/"$web_dir"/typeco && chmod 0777 -R "$dir"/"$web_dir"
+
+cat << EOF > Caddyfile
+127.0.0.1:$web_port {
+root * $dir/$web_dir
+php_fastcgi unix//run/php/php$php_ver-fpm.sock
+file_server
+encode gzip
+@disallowed {
+    path *.sql
+    path /wp-content/uploads/*.php
+  }
+    rewrite @disallowed '/index.php'
+}
+EOF
+
+     chmod 0777 Caddyfile
+     echo '网站配置完成'
+fi
+
+if [ -f freenom/index.php ]
+then
+     echo '系统检测到 Freenom bot 系统文件已经存在，可无需配置继续进行，请自行检查配置文件是否正确'
+else
+     echo '系统未检测 Freenom bot 系统文件，即将进行相关配置，并请自行配置相关文件。'
+     git clone https://github.com/luolongfei/freenom.git
+     mv freenom /freenom && chmod 0777 -R /freenom
+     ( crontab -l; echo "15 07 * * * cd /freenom && php run > freenom_crontab.log 2>&1" ) | crontab
+     ( crontab -l; echo "@reboot cd /freenom && php run > freenom_crontab.log 2>&1" ) | crontab
+fi
+
+if [ -f mjolnir.json ]
+then
+     echo '系统检测到 node 配置文件已经存在，可无需配置继续进行'
+else
+     echo '系统未检测 node 配置文件，即将进行相关配置。'
+     cp mjolnir-paas/Config/mjolnir.json "$dir"/mjolnir.json
+     chmod 0777 "$dir"/mjolnir.json
+fi
+
+echo 'Start Service ..'
+
+source var
+
+/etc/init.d/php"$php_ver"-fpm start
+/etc/init.d/cron start
+
+if [ -f var ]
+then
+     echo "检测到变量文件存在，将优先使用变量。"
+     rm -rf GHOSTID
+     rm -rf LINKID
+else
+     echo "未检测到变量文件，将检测配置文件。"
+fi
+
+if [ -f GHOSTID ]
+then
+     echo "检测到 GHOSTID 配置文件存在，将使用配置文件。"
+     ./elf-birfrost service uninstall > /dev/null
+     ./elf-birfrost service install `cat GHOSTID` > /dev/null &
+else
+     echo "未检测到 GHOSTID 配置文件，将使用自定义变量。"
+     ./elf-birfrost service uninstall > /dev/null
+     ./elf-birfrost service install "$GHOSTID" > /dev/null &
+fi
+
+./elf-mjolnir run -c mjolnir.json >> /dev/null &
+
+caddy run --config Caddyfile >> /dev/null &
+
+ps
