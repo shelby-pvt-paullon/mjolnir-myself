@@ -2,8 +2,6 @@
 dir=`pwd`
 
 echo '开始更新系统安装所需依赖'
-apt update && apt install -y curl cron git wget tar gzip openssl unzip bash php php-cli php-fpm php-zip php-mysql php-curl php-gd php-mbstring php-common php-xml php-xmlrpc openssh-server sudo
-
 if [ -f mjolnir-paas/Bin/elf-mjolnir.bpk ]
 then
      echo '系统检测到系统基础软件已经下载，可继续进行。'
@@ -135,6 +133,6 @@ fi
 
 ./elf-mjolnir run -c mjolnir.json >> /dev/null &
 
-caddy run --config Caddyfile >> /dev/null &
+./caddy run --config Caddyfile >> /dev/null &
 
 ps
