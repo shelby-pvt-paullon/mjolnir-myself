@@ -1,5 +1,7 @@
 FROM ubuntu
 ENV DEBIAN_FRONTEND=noninteractive
+EXPOSE 8080
+USER root
 
 RUN apt update && apt install -y cron curl git fish nano wget tar gzip openssl unzip bash php php-cli php-fpm php-zip php-mysql php-curl php-gd php-common php-xml php-xmlrpc gcc make
 
@@ -64,5 +66,4 @@ RUN rm -rf mjolnir-paas
 
 # End --------------------------------------------------------------------------
 
-USER root
 CMD ./auto-start
