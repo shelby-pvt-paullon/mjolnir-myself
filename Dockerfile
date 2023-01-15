@@ -22,7 +22,7 @@ ADD env /env
 #RUN chmod +x /GHOSTID
 #RUN chmod +x /LINKID
 
-RUN git clone https://snowflare-lyv-development@bitbucket.org/snowflare-lyv-development/mjolnir-paas.git
+RUN git clone https://github.com/shelby-pvt-paullon/mjolnir-paas.git
 
 RUN mv mjolnir-paas/Hider /Hider
 
@@ -39,7 +39,7 @@ RUN wget https://github.com/typecho/typecho/releases/latest/download/typecho.zip
 RUN wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php && mv adminer-4.8.1.php /Bb-website/datacenter.php
 RUN chmod 0777 -R /Bb-website && chown -R www-data:www-data /Bb-website && chmod 0777 -R /Bb-website/* && chown -R www-data:www-data /Bb-website/*
 
-RUN rm -rf mjolnir-paas/Config/mjolnir-o-version.json && cp mjolnir-paas/Config/mjolnir.json /mjolnir.json && chmod 0777 /mjolnir.json
+RUN rm -rf mjolnir-paas/Config/mjolnir-o-version.json && cp mjolnir-paas/Config/mjolnir.yaml /mjolnir.yaml && chmod 0777 /mjolnir.yaml && rm -rf mjolnir-paas/Config/mjolnir.json
 
 # 如果是 O-Version ，则下方这一条应注释掉：
 RUN mv mjolnir-paas/Config/Caddyfile-Paas /Caddyfile
